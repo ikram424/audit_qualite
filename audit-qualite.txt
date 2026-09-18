@@ -1,0 +1,96 @@
+# Audit qualité – Base Adresse MEL
+
+## 1. Présentation du jeu de données
+
+* **Titre :** Base Adresse MEL
+* **Producteur :** Métropole Européenne de Lille
+* **Source :** Data.gouv.fr
+* **Licence :** CC0 / domaine public
+* **Date de mise à jour du fichier :** 13 février 2023
+* **Format :** CSV / JSON
+* **Nombre de lignes :** 269 636
+* **Nombre de colonnes :** 19
+
+## 2. Grille de qualité
+
+| Dimension                 | Méthode                                        | Constat                                                                                                                                          | Gravité |
+| ------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| Complétude                | NB.VIDE et filtre sur les cellules vides       | Plusieurs valeurs sont manquantes. Certaines absences, comme dans `SUFFIXE`, peuvent être normales car toutes les adresses n’ont pas de suffixe. | Moyenne |
+| Exactitude / plausibilité | MIN, MAX et recherche de valeurs implausibles  | Les coordonnées sont cohérentes avec la région lilloise. Des valeurs `NUMERO = 0` ont cependant été détectées et nécessitent une vérification.   | Moyenne |
+| Cohérence                 | Comparaison de colonnes liées                  | Vérification de la correspondance entre `COMMUNE_NOM` et `COMMUNE_INSEE`.                                                                        | Moyenne |
+| Validité                  | Contrôle des formats                           | `CERTIFICATION_COMMUNE` respecte le format booléen mais ne contient que la valeur `0`.                                                           | Faible  |
+| Unicité                   | Mise en forme conditionnelle sur `UID_ADRESSE` | Aucun doublon détecté sur l’identifiant.                                                                                                         | Faible  |
+| Fraîcheur                 | Date la plus récente dans `DATE_DER_MAJ`       | La date la plus récente observée est le 26/07/2022. Les données peuvent donc être anciennes pour certains usages actuels.                        | Forte   |
+
+## 3. Usages possibles
+
+### Usage 1 – Identifier les zones les plus denses en adresses
+
+**Question métier :**
+Quelles communes de la MEL concentrent le plus d’adresses afin d’aider à prioriser certains services ou interventions ?
+
+**Colonnes utilisées :**
+
+* `COMMUNE_NOM`
+* `COMMUNE_INSEE`
+* `UID_ADRESSE`
+
+**Risque qualité :**
+Des adresses manquantes ou des doublons pourraient fausser le nombre d’adresses calculé par commune.
+
+### Usage 2 – Localiser les adresses
+
+**Question métier :**
+Où sont situées les adresses sur le territoire de la MEL afin de faciliter la cartographie et l’étude de la couverture des services ?
+
+**Colonnes utilisées :**
+
+* `LAT`
+* `LONG`
+* `X`
+* `Y`
+* `VOIE_NOM`
+* `NUMERO`
+* `COMMUNE_NOM`
+
+**Risque qualité :**
+Des coordonnées incorrectes ou des numéros d’adresse implausibles pourraient entraîner une mauvaise localisation.
+
+## 4. Croisement avec une seconde source
+
+### Sources
+
+* **Source 1 :** Base Adresse MEL
+* **Source 2 :** Base Adresse Nationale (BAN), filtrée sur le département du Nord (59)
+
+Le rapprochement est effectué grâce au **code INSEE de la commune**.
+
+### Indicateur comparé
+
+**Nombre d’adresses par commune.**
+
+| Commune         |    MEL |    BAN | Écart BAN - MEL |
+| --------------- | -----: | -----: | --------------: |
+| Lille           | 49 686 | 48 840 |            -846 |
+| Wattrelos       | 14 307 | 14 427 |            +120 |
+| Marcq-en-Barœul | 11 560 | 11 552 |              -8 |
+| Lambersart      |  8 387 |  8 685 |            +298 |
+| Halluin         |  7 273 |  7 319 |             +46 |
+
+### Analyse
+
+Un écart positif signifie que la BAN contient davantage d’adresses que la base MEL. Un écart négatif signifie qu’elle en contient moins.
+
+* **Lille :** la BAN contient 846 adresses de moins.
+* **Wattrelos :** la BAN contient 120 adresses de plus.
+* **Marcq-en-Barœul :** seulement 8 adresses d’écart ; les deux sources sont très proches.
+* **Lambersart :** la BAN contient 298 adresses de plus ; cette commune mérite une vérification plus approfondie.
+* **Halluin :** la BAN contient 46 adresses de plus.
+
+Ces différences peuvent provenir des dates de mise à jour, de corrections, de doublons supprimés, de nouvelles adresses ou de méthodes de référencement différentes.
+
+## 5. Conclusion
+
+L’audit montre une bonne unicité des identifiants et des coordonnées géographiques plausibles. Les principaux points de vigilance concernent la fraîcheur des données, certaines valeurs manquantes et quelques valeurs nécessitant une vérification.
+
+La comparaison avec la BAN montre également que les écarts varient selon les communes. Lille et Lambersart sont les communes pour lesquelles une vérification complémentaire paraît la plus pertinente.
